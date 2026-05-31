@@ -80,6 +80,13 @@ Return only valid JSON in this exact format:
   "habit": "One small daily habit they should start today.",
   "warning": "One mistake their future self warns them about.",
   "mantra": "A short memorable line they can repeat daily.",
+  "skillsToMaster": [
+    {
+      "skill": "Name of the target skill to master, e.g. Node API Routing",
+      "why": "Why this skill is absolutely required to solve their struggle and reach their goal.",
+      "actionStep": "One clear, immediate micro-learning action step they can execute today."
+    }
+  ],
   "dailyPlan": [
     {
       "time": "Specific hour slot, e.g., 07:00 AM or 09:00 PM",
@@ -187,6 +194,100 @@ Reply in 2-5 short paragraphs. Give at least one clear action. Speak directly to
     return res.status(500).json({
       success: false,
       error: "FutureMe could not respond right now. Try again."
+    });
+  }
+});
+
+/**
+ * Route: POST /api/checkin-futureme
+ * Description: Personal tutor endpoint that evaluates daily progress logs and adjusts future schedules
+ */
+app.post("/api/checkin-futureme", async (req, res) => {
+  try {
+    const { userProfile, dailyPlan, completedTasks, progressLog } = req.body;
+
+    if (!userProfile || !dailyPlan || !completedTasks || !progressLog) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required progress parameters"
+      });
+    }
+
+    const { name, goal, struggle, oneYearVision, tone } = userProfile;
+
+    // Format current plan and completion status
+    const formattedDailyPlan = dailyPlan
+      .map((item, index) => `${index + 1}. [${item.time}] ${item.task}`)
+      .join("\n");
+
+    const formattedCompletedTasks = dailyPlan
+      .map((item, index) => `${item.task} -> ${completedTasks[index] ? "COMPLETED" : "INCOMPLETE"}`)
+      .join("\n");
+
+    const tutorPrompt = `You are FutureMe, the successful future version of the user who has also stepped into the role of their personal tutor. Your job is to act as a highly motivating personal tutor, evaluate their daily progress report, adjust their schedule for tomorrow, and recommend exactly what concepts or micro-skills they must study next.
+
+Tone selected by user: ${tone}
+Tones instructions:
+- Motivational: warm, inspiring, encouraging, high energy, celebrate wins.
+- Brutally Honest: direct, sharp, laser-focused on habits, zero excuses.
+- Calm Mentor: wise, patient, grounded, balancing execution with mindfulness.
+- CEO Mode: strategic, metrics-oriented, prioritizing leverage, velocity, and focus.
+
+User details:
+Name: ${name}
+Goal: ${goal}
+Current struggle: ${struggle}
+One-year vision: ${oneYearVision}
+
+Today's Daily Schedule:
+${formattedDailyPlan}
+
+User's Completed Tasks:
+${formattedCompletedTasks}
+
+User's Self-Reported Progress Log:
+"${progressLog}"
+
+Your response must be returned as valid JSON in this exact format:
+{
+  "feedback": "A warm or direct personal evaluation of their daily effort (100-150 words). Encourage them, correct their habits, and explain why this moves them closer to their identity.",
+  "assessment": "A concise diagnostic summary of what went right or where friction lies.",
+  "nextLearningStep": "One extremely specific, concrete concept, skill, or tutorial module they must learn next to solve their blocker.",
+  "adjustedDailyPlan": [
+    {
+      "time": "Hour slot for tomorrow, e.g., 07:00 AM",
+      "task": "A recalibrated task incorporating their learning progress and adjusting for tomorrow's schedule.",
+      "motivation": "A short inspiring/sharp tip to drive execution."
+    }
+  ]
+}
+
+Ensure the adjusted daily plan contains exactly 4-5 well-distributed tasks. Keep it highly practical. Avoid abstract advice. Make it feel like an active, responsive coaching checklist.`;
+
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.5-flash",
+      generationConfig: {
+        responseMimeType: "application/json"
+      }
+    });
+
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: tutorPrompt }] }]
+    });
+
+    const responseText = result.response.text();
+    const cleanedText = cleanJSONResponse(responseText);
+    const parsedData = JSON.parse(cleanedText);
+
+    return res.json({
+      success: true,
+      data: parsedData
+    });
+  } catch (error) {
+    console.error("Error in /api/checkin-futureme:", error);
+    return res.status(500).json({
+      success: false,
+      error: "FutureMe could not analyze your progress right now. Try again."
     });
   }
 });

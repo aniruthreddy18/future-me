@@ -998,3 +998,57 @@ footer {
 .timeline-item.completed .timeline-motivation {
     color: var(--text-tertiary);
 }
+
+/* --- Tutor Syllabus Skills Mastery CSS --- */
+.skill-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.skill-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.skill-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.skill-badge {
+    background: rgba(163, 112, 255, 0.1);
+    color: #a370ff;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid rgba(163, 112, 255, 0.25);
+    box-shadow: 0 0 8px rgba(163, 112, 255, 0.08);
+}
+
+.skill-why {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.skill-action {
+    font-size: 12px;
+    color: #e2e2e7;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+}
+
+.skill-action::before {
+    content: '⚡ Action:';
+    color: #ffb800;
+    font-weight: 600;
+}

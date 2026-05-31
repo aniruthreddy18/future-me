@@ -148,10 +148,19 @@
                             <h4>Your Next 3 Moves</h4>
                             <ul class="moves-list" id="dynamicMoves"></ul>
                         </div>
-                        
-                        <div class="result-block">
+                           <div class="result-block">
                             <h4>One Habit to Start Today</h4>
                             <p id="dynamicHabit"></p>
+                        </div>
+
+                        <!-- Tutor Syllabus: Target Skills to Learn -->
+                        <div class="result-block skills-mastery-block" style="margin-top: 24px; padding: 20px 24px; background: rgba(112, 0, 255, 0.03); border: 1px solid rgba(112, 0, 255, 0.15); border-radius: 14px;">
+                            <h4 style="color: #a370ff; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                                📚 Tutor Syllabus: Skills to Master
+                            </h4>
+                            <div id="dynamicSkills" style="display: flex; flex-direction: column; gap: 16px;">
+                                <!-- Skills will be injected dynamically -->
+                            </div>
                         </div>
 
                         <div class="result-block warning-block">
@@ -175,6 +184,53 @@
                             </div>
                             <div class="timeline-container" id="dynamicDailyPlan">
                                 <!-- dynamic plan items will appear here -->
+                            </div>
+                        </div>
+
+                        <!-- Personal Tutor Hub: Daily Progress Check-In -->
+                        <div class="result-block tutor-checkin-block" style="margin-top: 36px; border-top: 1px dashed var(--border-subtle); padding-top: 28px;">
+                            <h4 style="color: var(--accent-primary); font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px;">
+                                🧑‍🏫 Personal Tutor Hub: Daily Progress Check-In
+                            </h4>
+                            <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px; line-height: 1.5;">
+                                Completed your tasks for today? Log your progress, breakthroughs, and struggles here. Your future self (acting as your tutor) will evaluate your effort, provide active feedback, and recalibrate your study schedule for tomorrow!
+                            </p>
+                            <form id="checkinForm" onsubmit="submitProgressCheckin(event)" style="display: flex; flex-direction: column; gap: 16px;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="checkinLog" style="font-size: 12px;">What did you learn today? What did you struggle with?</label>
+                                    <textarea id="checkinLog" placeholder="e.g., I completed the coding session but struggled to figure out CORS error on port 5000. I need to understand micro-service routing..." required style="min-height: 80px;"></textarea>
+                                </div>
+                                <button type="submit" id="checkinSubmitBtn" class="btn btn-primary" style="width: 100%; padding: 12px;">
+                                    Submit Progress to Tutor
+                                </button>
+                            </form>
+
+                            <!-- Check-in Loading State -->
+                            <div id="checkinLoading" style="display: none; text-align: center; padding: 24px 0;">
+                                <div class="spinner" style="width: 30px; height: 30px; margin-bottom: 12px;"></div>
+                                <div class="loading-text" style="font-size: 14px;">Tutor evaluating your progress...</div>
+                            </div>
+
+                            <!-- Dynamic Tutor Feedback Output -->
+                            <div id="tutorFeedbackCard" style="display: none; margin-top: 24px; padding: 20px; background: rgba(48, 209, 88, 0.03); border: 1px solid rgba(48, 209, 88, 0.2); border-radius: 14px; animation: fadeIn 0.5s ease;">
+                                <h5 style="color: #30d158; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px;">
+                                    ✓ Evaluation Complete
+                                </h5>
+                                <div style="font-style: italic; font-size: 15px; color: var(--text-primary); line-height: 1.6; margin-bottom: 20px;" id="tutorFeedbackText"></div>
+                                
+                                <div style="margin-bottom: 16px;">
+                                    <h6 style="color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">
+                                        Diagnostic Assessment
+                                    </h6>
+                                    <p id="tutorAssessmentText" style="font-size: 14px; color: #e2e2e7; font-weight: 500;"></p>
+                                </div>
+
+                                <div>
+                                    <h6 style="color: #a370ff; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">
+                                        Next Study Milestone
+                                    </h6>
+                                    <p id="tutorMilestoneText" style="font-size: 14px; color: #a370ff; font-weight: 600;"></p>
+                                </div>
                             </div>
                         </div>
 

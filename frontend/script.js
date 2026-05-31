@@ -100,6 +100,24 @@ async function generateFutureMe(event) {
         document.getElementById('dynamicWarning').innerText = data.warning || "None";
         document.getElementById('dynamicMantra').innerText = `“${data.mantra || "Keep moving forward."}”`;
 
+        // Populate Tutor Syllabus: Skills to Master list
+        const skillsElement = document.getElementById('dynamicSkills');
+        skillsElement.innerHTML = '';
+        if (Array.isArray(data.skillsToMaster)) {
+            data.skillsToMaster.forEach(skillItem => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'skill-item';
+                itemDiv.innerHTML = `
+                    <div class="skill-header">
+                        <span class="skill-badge">${skillItem.skill}</span>
+                    </div>
+                    <div class="skill-why">${skillItem.why}</div>
+                    <div class="skill-action">${skillItem.actionStep}</div>
+                `;
+                skillsElement.appendChild(itemDiv);
+            });
+        }
+
         // Populate Actionable Daily Plan Timeline Checklist
         const timelineElement = document.getElementById('dynamicDailyPlan');
         timelineElement.innerHTML = '';
@@ -288,6 +306,120 @@ function updateTimelineProgress() {
     document.getElementById('planProgressBar').style.width = `${percentage}%`;
 }
 
+/* --- Personal Tutor Progress Check-In Handler --- */
+async function submitProgressCheckin(event) {
+    event.preventDefault();
+
+    if (!activeUserProfile) {
+        triggerToast("Please generate your FutureMe first.");
+        return;
+    }
+
+    const logInput = document.getElementById('checkinLog');
+    const progressLogText = logInput.value.trim();
+    if (!progressLogText) return;
+
+    // Elements
+    const checkinForm = document.getElementById('checkinForm');
+    const checkinLoading = document.getElementById('checkinLoading');
+    const tutorFeedbackCard = document.getElementById('tutorFeedbackCard');
+    const submitBtn = document.getElementById('checkinSubmitBtn');
+
+    // UI Transition: Show loading states
+    submitBtn.disabled = true;
+    checkinForm.style.display = 'none';
+    checkinLoading.style.display = 'block';
+    tutorFeedbackCard.style.display = 'none';
+
+    // Gather current daily plan tasks and checked status
+    const dailyPlan = [];
+    const completedTasks = [];
+    document.querySelectorAll('#dynamicDailyPlan .timeline-item').forEach((item, index) => {
+        const time = item.querySelector('.timeline-time').innerText;
+        const task = item.querySelector('.timeline-task').innerText;
+        const motivation = item.querySelector('.timeline-motivation').innerText;
+        const isChecked = item.querySelector('.timeline-checkbox').checked;
+        dailyPlan.push({ time, task, motivation });
+        completedTasks.push(isChecked);
+    });
+
+    try {
+        const response = await fetch(`${backendUrl}/api/checkin-futureme`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                userProfile: activeUserProfile,
+                dailyPlan: dailyPlan,
+                completedTasks: completedTasks,
+                progressLog: progressLogText
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error("Server responded with error status");
+        }
+
+        const payload = await response.json();
+        if (!payload.success || !payload.data) {
+            throw new Error(payload.error || "Invalid response payload");
+        }
+
+        const result = payload.data;
+
+        // Populate Evaluation output targets
+        document.getElementById('tutorFeedbackText').innerText = `“${result.feedback}”`;
+        document.getElementById('tutorAssessmentText').innerText = result.assessment;
+        document.getElementById('tutorMilestoneText').innerText = result.nextLearningStep;
+
+        // Dynamic Recalibration of the Daily Plan Checklist
+        if (Array.isArray(result.adjustedDailyPlan)) {
+            const timelineElement = document.getElementById('dynamicDailyPlan');
+            timelineElement.innerHTML = '';
+            result.adjustedDailyPlan.forEach((planItem, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'timeline-item';
+                itemDiv.id = `timelineItem-${index}`;
+                itemDiv.innerHTML = `
+                    <div class="timeline-checkbox-wrapper">
+                        <input type="checkbox" class="timeline-checkbox" id="taskCheckbox-${index}" onchange="toggleTimelineTask(${index})">
+                    </div>
+                    <div class="timeline-content-wrapper">
+                        <div class="timeline-time">${planItem.time}</div>
+                        <div class="timeline-task">${planItem.task}</div>
+                        <div class="timeline-motivation">${planItem.motivation}</div>
+                    </div>
+                `;
+                timelineElement.appendChild(itemDiv);
+            });
+            // Update labels
+            updateTimelineProgress();
+        }
+
+        // Clear log input and transition UI
+        logInput.value = "";
+        checkinLoading.style.display = 'none';
+        checkinForm.style.display = 'flex';
+        tutorFeedbackCard.style.display = 'block';
+        submitBtn.disabled = false;
+
+        // Scroll response card into view
+        setTimeout(() => {
+            tutorFeedbackCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+
+        triggerToast("Daily progress logged to tutor successfully.");
+
+    } catch (error) {
+        console.error("Tutor check-in error:", error);
+        checkinLoading.style.display = 'none';
+        checkinForm.style.display = 'flex';
+        submitBtn.disabled = false;
+        triggerToast("Check-in failed. Please try again.");
+    }
+}
+
 /* --- Clipboard Copy Utilities --- */
 function copyResult() {
     if (!activeUserProfile) {
@@ -307,6 +439,16 @@ function copyResult() {
     const moves = [];
     document.querySelectorAll('#dynamicMoves li').forEach(li => moves.push(li.innerText));
     const formattedMoves = moves.map((move, index) => `${index + 1}. ${move}`).join("\n");
+
+    // Gather and format recommended Skills
+    const skills = [];
+    document.querySelectorAll('#dynamicSkills .skill-item').forEach(item => {
+        const skill = item.querySelector('.skill-badge').innerText;
+        const why = item.querySelector('.skill-why').innerText;
+        const action = item.querySelector('.skill-action').innerText;
+        skills.push(`📚 ${skill}\n   Importance: ${why}\n   Action: ${action}`);
+    });
+    const formattedSkills = skills.length > 0 ? skills.join("\n\n") : "None.";
 
     // Gather and format Daily Timeline Checklist
     const dailyPlanItems = [];
@@ -337,6 +479,9 @@ ${formattedMoves}
 
 🌱 Daily Habit:
 ${habit}
+
+📚 Skills to Master:
+${formattedSkills}
 
 ⚠️ Future Self Warning:
 ${warning}
